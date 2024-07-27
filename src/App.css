@@ -1,0 +1,34 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.App {
+  padding: 20px;
+}
+
+.controls button {
+  width: 40px;
+  height: 40px;
+}
+
+.controls span {
+  font-size: 1.5em;
+}
+
+.buffs-container {
+  margin-top: 20px;
+}
+
+.buff-form {
+  margin: 20px 0;
+}
+
+.buff-list .buff {
+  background: #e0ffe0;
+  border: 1px solid #008000;
+  border-radius: 5px;
+  padding: 10px;
+}
