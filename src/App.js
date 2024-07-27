@@ -1,6 +1,7 @@
 import React, { useState, useEffect  } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import { MultiSelect } from "react-multi-select-component";
 
 function App() {
   const [stats, setStats] = useState(() => {
@@ -107,15 +108,28 @@ function App() {
 }
 
 function BuffForm({ addBuff }) {
-  const [stat, setStat] = useState('determination');
   const [turns, setTurns] = useState(1);
   const [points, setPoints] = useState(1);
+  const [selected, setSelected] = useState([]);
+
+  const options = [
+    { label: "Determination", value: "determination" },
+    { label: "Humor", value: "humor" },
+    { label: "Intelligence", value: "intelligence" },
+    { label: "Appearance", value: "appearance" },
+    { label: "Wealth", value: "wealth" }
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const debuffActivoitu = e.target.debuff.checked
     const arvo = debuffActivoitu ? -Math.abs(Number(points)) : Number(points)
-    addBuff(stat, turns, arvo);
+    if(selected.length === 0){
+      return null
+    }
+    for (let index = 0; index < selected?.length; index++) {
+      addBuff(selected[index].value, turns, arvo);
+    }
   };
 
   return (
@@ -128,13 +142,12 @@ function BuffForm({ addBuff }) {
       </div>
       <div className="form-group">
         <label htmlFor="statSelect">Stat:</label>
-        <select id="statSelect" className="form-control" value={stat} onChange={(e) => setStat(e.target.value)}>
-          <option value="determination">Determination</option>
-          <option value="humor">Humor</option>
-          <option value="intelligence">Intelligence</option>
-          <option value="appearance">Appearance</option>
-          <option value="wealth">Wealth</option>
-        </select>
+        <MultiSelect
+          options={options}
+          value={selected}
+          onChange={setSelected}
+          labelledBy="Select"
+        />
       </div>
       <div className="form-group">
         <label htmlFor="turnsInput">Turns:</label>
