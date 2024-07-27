@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 function App() {
-  const [stats, setStats] = useState({
-    determination: 0,
-    humor: 0,
-    intelligence: 0,
-    appearance: 0,
-    wealth: 0
+  const [stats, setStats] = useState(() => {
+    const savedStats = JSON.parse(localStorage.getItem('stats'));
+    return savedStats || { determination: 0, humor: 0, intelligence: 0, appearance: 0, wealth: 0 };
   });
 
-  const [buffs, setBuffs] = useState([]);
+  const [buffs, setBuffs] = useState(() => {
+    const savedBuffs = JSON.parse(localStorage.getItem('buffs'));
+    return savedBuffs || [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('stats', JSON.stringify(stats));
+  }, [stats]);
+
+  useEffect(() => {
+    localStorage.setItem('buffs', JSON.stringify(buffs));
+  }, [buffs]);
 
   const increment = (stat) => {
     setStats(prevStats => ({ ...prevStats, [stat]: prevStats[stat] + 1 }));
@@ -37,10 +45,22 @@ function App() {
     );
   };
 
+  const resetGame = () => {
+    setStats({
+      determination: 0,
+      humor: 0,
+      intelligence: 0,
+      appearance: 0,
+      wealth: 0
+    });
+    setBuffs([]);
+    localStorage.removeItem('stats');
+    localStorage.removeItem('buffs');
+  };
+
   const calculateEffectiveStats = () => {
     const effectiveStats = { ...stats };
     buffs.forEach(buff => {
-      console.log(effectiveStats[buff.stat], buff.points)
       effectiveStats[buff.stat] += buff.points;
     });
     return effectiveStats;
@@ -77,6 +97,9 @@ function App() {
         <BuffList buffs={buffs} removeBuff={removeBuff} />
         <div className="text-center mt-4">
           <button className="btn btn-warning" onClick={endTurn}>End Turn</button>
+        </div>
+        <div className="text-center mt-4">
+          <button className="btn btn-danger ml-2" onClick={resetGame}>Aloita alusta</button>
         </div>
       </div>
     </div>
