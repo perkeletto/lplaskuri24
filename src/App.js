@@ -86,15 +86,23 @@ function App() {
 function BuffForm({ addBuff }) {
   const [stat, setStat] = useState('determination');
   const [turns, setTurns] = useState(1);
-  const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState(1);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    addBuff(stat, turns, Number(points));
+    const debuffActivoitu = e.target.debuff.checked
+    const arvo = debuffActivoitu ? -Math.abs(Number(points)) : Number(points)
+    addBuff(stat, turns, arvo);
   };
 
   return (
     <form className="buff-form" onSubmit={handleSubmit}>
+      <div className="form-group">
+      <div className="form-check form-switch">
+        <input className="form-check-input" type="checkbox" id="debuff"></input>
+        <label className="form-check-label" htmlFor="flexSwitchCheckDefault">Debuff</label>
+      </div>
+      </div>
       <div className="form-group">
         <label htmlFor="statSelect">Stat:</label>
         <select id="statSelect" className="form-control" value={stat} onChange={(e) => setStat(e.target.value)}>
@@ -111,7 +119,7 @@ function BuffForm({ addBuff }) {
       </div>
       <div className="form-group">
         <label htmlFor="pointsInput">Points:</label>
-        <input id="pointsInput" type="number" className="form-control" value={points} onChange={(e) => setPoints(e.target.value)} />
+        <input id="pointsInput" type="number" className="form-control" value={points} onChange={(e) => setPoints(e.target.value)} min="1" />
       </div>
       <br />
       <div className="row">
@@ -123,16 +131,16 @@ function BuffForm({ addBuff }) {
 
 function BuffList({ buffs, removeBuff }) {
   return (
-    <ul class="list-group">
+    <ul className="list-group">
       {buffs.map((buff, index) => (
-        <li class={`list-group-item list-group-item-${(Number(buff.points) >= 0) ? 'success' : 'danger' }`}>
-          <div class="row">
-            <div class="col-8">
+        <li key={index} className={`list-group-item list-group-item-${(Number(buff.points) >= 0) ? 'success' : 'danger' }`}>
+          <div className="row">
+            <div className="col-8">
               {`${buff.stat.toUpperCase()}: ${buff.points} T${buff.turns}`}
             </div>
-            <div class="col-2">
+            <div className="col-2">
             </div>
-            <div class="col-2">
+            <div className="col-2">
               <button className="btn btn-danger" onClick={() => removeBuff(index)}>X</button>
             </div>
           </div>
