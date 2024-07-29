@@ -159,12 +159,12 @@ function BuffForm({ addBuff }) {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="turnsInput">Turns:</label>
-        <input id="turnsInput" type="number" className="form-control" value={turns} onChange={(e) => setTurns(e.target.value)} min="1" />
+        <label htmlFor="pointsInput">Amount:</label>
+        <input id="pointsInput" type="number" className="form-control" value={points} onChange={(e) => setPoints(e.target.value)} min="1" />
       </div>
       <div className="form-group">
-        <label htmlFor="pointsInput">Points:</label>
-        <input id="pointsInput" type="number" className="form-control" value={points} onChange={(e) => setPoints(e.target.value)} min="1" />
+        <label htmlFor="turnsInput">Turns:</label>
+        <input id="turnsInput" type="number" className="form-control" value={turns} onChange={(e) => setTurns(e.target.value)} min="1" />
       </div>
       <br />
       {show && (
