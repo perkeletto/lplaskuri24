@@ -32,3 +32,8 @@ body {
   border-radius: 5px;
   padding: 10px;
 }
+
+.disabled {
+  background-color: #9b9b9b !important;
+  border-color: #9b9b9b !important;
+}

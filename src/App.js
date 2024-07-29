@@ -2,6 +2,7 @@ import React, { useState, useEffect  } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import { MultiSelect } from "react-multi-select-component";
+import Alert from 'react-bootstrap/Alert';
 
 function App() {
   const [stats, setStats] = useState(() => {
@@ -76,7 +77,7 @@ function App() {
           <button className="btn btn-warning" onClick={endTurn}>End Turn</button>
       </div>
       <br />
-        {Object.keys(effectiveStats).map(stat => (
+        {Object.keys(effectiveStats).sort().map(stat => (
           <div key={stat} className="row">
           <div className="col-12 col-md-6 col-lg-4 mb-6">
             <div className="card text-center">
@@ -111,6 +112,7 @@ function BuffForm({ addBuff }) {
   const [turns, setTurns] = useState(1);
   const [points, setPoints] = useState(1);
   const [selected, setSelected] = useState([]);
+  const [show, setShow] = useState(false);
 
   const options = [
     { label: "Determination", value: "determination" },
@@ -122,6 +124,10 @@ function BuffForm({ addBuff }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    addSubmittedBuffs(e)
+  };
+  
+  const addSubmittedBuffs = e => {
     const debuffActivoitu = e.target.debuff.checked
     const arvo = debuffActivoitu ? -Math.abs(Number(points)) : Number(points)
     if(selected.length === 0){
@@ -130,7 +136,9 @@ function BuffForm({ addBuff }) {
     for (let index = 0; index < selected?.length; index++) {
       addBuff(selected[index].value, turns, arvo);
     }
-  };
+    setShow(true)
+    return e
+  }
 
   return (
     <form className="buff-form" onSubmit={handleSubmit}>
@@ -143,6 +151,7 @@ function BuffForm({ addBuff }) {
       <div className="form-group">
         <label htmlFor="statSelect">Stat:</label>
         <MultiSelect
+         disableSearch={true}
           options={options}
           value={selected}
           onChange={setSelected}
@@ -158,8 +167,13 @@ function BuffForm({ addBuff }) {
         <input id="pointsInput" type="number" className="form-control" value={points} onChange={(e) => setPoints(e.target.value)} min="1" />
       </div>
       <br />
+      {show && (
+        <Alert variant="primary" onClose={() => setShow(false)} dismissible>
+          Buff/debuff lisätty, sulje ja lisää uusi!
+      </Alert>
+      )}
       <div className="row">
-        <button type="submit" className="btn btn-primary">Add Buff/Debuff</button>
+        <button type="submit" disabled={show} className={show ? "btn btn-primary disabled" : "btn btn-primary"}>Add Buff/Debuff</button>
       </div>
     </form>
   );
