@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import { MultiSelect } from "react-multi-select-component";
 import Alert from 'react-bootstrap/Alert';
 import BuffsContainer from './components/BuffsContainer';
 
@@ -25,6 +24,8 @@ function App() {
       return [];
     }
   });
+
+  const [turnEnded, setTurnEnded] = useState(false);
 
   useEffect(() => {
     try {
@@ -59,27 +60,36 @@ function App() {
   };
 
   const endTurn = () => {
-    setBuffs(prevBuffs => 
-      prevBuffs
-        .map(buff => ({ ...buff, turns: buff.turns - 1 }))
-        .filter(buff => buff.turns > 0)
-    );
+    const previousBuffs = [...buffs];
+    const newBuffs = previousBuffs
+      .map(buff => ({ ...buff, turns: buff.turns - 1 }))
+      .filter(buff => buff.turns > 0);
+    
+    setBuffs(newBuffs);
+    
+    // Show visual feedback if buffs were affected
+    if (previousBuffs.length > 0) {
+      setTurnEnded(true);
+      setTimeout(() => setTurnEnded(false), 2000); // Hide after 2 seconds
+    }
   };
 
   const resetGame = () => {
-    setStats({
-      determination: 0,
-      humor: 0,
-      intelligence: 0,
-      appearance: 0,
-      wealth: 0
-    });
-    setBuffs([]);
-    try {
-      localStorage.removeItem('stats');
-      localStorage.removeItem('buffs');
-    } catch (error) {
-      console.error('Error clearing localStorage:', error);
+    if (window.confirm('Are you sure you want to reset all stats and buffs? This action cannot be undone.')) {
+      setStats({
+        determination: 0,
+        humor: 0,
+        intelligence: 0,
+        appearance: 0,
+        wealth: 0
+      });
+      setBuffs([]);
+      try {
+        localStorage.removeItem('stats');
+        localStorage.removeItem('buffs');
+      } catch (error) {
+        console.error('Error clearing localStorage:', error);
+      }
     }
   };
 
@@ -92,57 +102,69 @@ function App() {
   }, [stats, buffs]);
 
   return (
-    <div className="App container mt-4">
-      <h1 className="text-center">LP STATIT</h1>
-      <div className="text-center mt-4">
+    <div className="App">
+      <header className="app-header">
+        <h1 className="app-title">LP STATIT</h1>
+      </header>
+      
+      <div className="action-buttons">
         <button 
-          className="btn btn-warning" 
+          className={`btn ${turnEnded ? 'btn-success' : 'btn-warning'}`}
           onClick={endTurn}
           aria-label="End current turn and reduce buff durations"
+          disabled={turnEnded}
         >
-          End Turn
+          {turnEnded ? 'Turn Ended!' : 'End Turn'}
         </button>
-      </div>
-      <br />
-      {Object.keys(effectiveStats).sort().map(stat => (
-        <div key={stat} className="row">
-          <div className="col-12 col-md-6 col-lg-4 mb-6">
-            <div className="card text-center">
-              <div className="card-body">
-                <h2 className="card-title">{stat.toUpperCase()}</h2>
-                <div className="controls d-flex justify-content-around align-items-center">
-                  <button 
-                    className="btn btn-danger" 
-                    onClick={() => decrement(stat)}
-                    aria-label={`Decrease ${stat}`}
-                  >
-                    -
-                  </button>
-                  <span className="h4" role="status" aria-live="polite">{effectiveStats[stat]}</span>
-                  <button 
-                    className="btn btn-success" 
-                    onClick={() => increment(stat)}
-                    aria-label={`Increase ${stat}`}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-      <div className="text-center mt-4">
         <button 
-          className="btn btn-danger ml-2" 
+          className="btn btn-danger" 
           onClick={resetGame}
           aria-label="Reset all stats and buffs to zero"
         >
           Aloita alusta
         </button>
       </div>
+      
+      {turnEnded && (
+        <div className="feedback-message feedback-success">
+          ✓ Turn ended - buff durations reduced
+        </div>
+      )}
+      
+      <div className="stats-grid">
+        {Object.keys(effectiveStats).sort().map(stat => (
+          <div key={stat} className="stat-card">
+            <h2 className="stat-title">{stat.toUpperCase()}</h2>
+            <div className="stat-controls">
+              <button 
+                className="stat-btn stat-btn-decrease" 
+                onClick={() => decrement(stat)}
+                aria-label={`Decrease ${stat}`}
+              >
+                -
+              </button>
+              <span className="stat-value" role="status" aria-live="polite">
+                {effectiveStats[stat]}
+              </span>
+              <button 
+                className="stat-btn stat-btn-increase" 
+                onClick={() => increment(stat)}
+                aria-label={`Increase ${stat}`}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      
       <BuffsContainer>
         <h2 className="text-center">Buffs & Debuffs</h2>
+        {buffs.length > 0 && (
+          <div className="active-effects">
+            {buffs.length} active effect{buffs.length !== 1 ? 's' : ''}
+          </div>
+        )}
         <BuffForm addBuff={addBuff} />
         <BuffList buffs={buffs} removeBuff={removeBuff} />
       </BuffsContainer>
@@ -208,7 +230,7 @@ function BuffForm({ addBuff }) {
         </Alert>
       )}
       <div className="form-group">
-        <div className="form-check form-switch">
+        <div className="form-check">
           <input 
             className="form-check-input" 
             type="checkbox" 
@@ -219,20 +241,29 @@ function BuffForm({ addBuff }) {
           <div id="debuff-help" className="form-text">Check to make this a negative effect</div>
         </div>
       </div>
+             <div className="form-group">
+         <label className="form-label" htmlFor="statSelect">Stat:</label>
+         <div className="custom-select">
+           {options.map(option => (
+             <label key={option.value} className="custom-select-option">
+               <input
+                 type="checkbox"
+                 checked={selected.some(item => item.value === option.value)}
+                 onChange={(e) => {
+                   if (e.target.checked) {
+                     setSelected([...selected, option]);
+                   } else {
+                     setSelected(selected.filter(item => item.value !== option.value));
+                   }
+                 }}
+               />
+               <span className="custom-select-text">{option.label}</span>
+             </label>
+           ))}
+         </div>
+       </div>
       <div className="form-group">
-        <label htmlFor="statSelect">Stat:</label>
-        <MultiSelect
-          disableSearch={true}
-          options={options}
-          value={selected}
-          onChange={setSelected}
-          labelledBy="Select stats"
-          hasSelectAll={false}
-          aria-label="Select stats to affect"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="pointsInput">Amount:</label>
+        <label className="form-label" htmlFor="pointsInput">Amount:</label>
         <input 
           id="pointsInput" 
           type="number" 
@@ -245,7 +276,7 @@ function BuffForm({ addBuff }) {
         <div id="points-help" className="form-text">The amount to add or subtract from the stat</div>
       </div>
       <div className="form-group">
-        <label htmlFor="turnsInput">Turns:</label>
+        <label className="form-label" htmlFor="turnsInput">Turns:</label>
         <input 
           id="turnsInput" 
           type="number" 
@@ -257,17 +288,16 @@ function BuffForm({ addBuff }) {
         />
         <div id="turns-help" className="form-text">How many turns this effect will last</div>
       </div>
-      <br />
       {show && (
         <Alert variant="primary" onClose={() => setShow(false)} dismissible>
           Buff/debuff lisätty, sulje ja lisää uusi!
         </Alert>
       )}
-      <div className="row">
+      <div className="form-group">
         <button 
           type="submit" 
           disabled={show} 
-          className={show ? "btn btn-primary disabled" : "btn btn-primary"}
+          className={show ? "btn btn-primary" : "btn btn-primary"}
           aria-label="Add buff or debuff to selected stats"
         >
           Add Buff/Debuff
@@ -280,38 +310,39 @@ function BuffForm({ addBuff }) {
 function BuffList({ buffs, removeBuff }) {
   if (buffs.length === 0) {
     return (
-      <div className="text-center text-muted">
+      <div className="empty-state">
         <p>No active buffs or debuffs</p>
       </div>
     );
   }
 
   return (
-    <ul className="list-group" role="list" aria-label="Active buffs and debuffs">
+    <div className="buff-list" role="list" aria-label="Active buffs and debuffs">
       {buffs.map((buff, index) => (
-        <li 
+        <div 
           key={index} 
-          className={`list-group-item list-group-item-${(Number(buff.points) >= 0) ? 'success' : 'danger'}`}
+          className={`buff-item ${(Number(buff.points) >= 0) ? 'buff-item-success' : 'buff-item-danger'}`}
           role="listitem"
         >
-          <div className="row align-items-center">
-            <div className="col-8">
-              <span className="fw-bold">{buff.stat.toUpperCase()}:</span> {buff.points} 
-              <span className="text-muted"> (T{buff.turns} turns remaining)</span>
+          <div className="buff-content">
+            <div className="buff-info">
+              <span className="buff-stat">{buff.stat.toUpperCase()}:</span> 
+              <span className="buff-value">{buff.points}</span>
+              <span className={`buff-turns ${buff.turns <= 1 ? 'buff-turns-warning' : 'buff-turns-normal'}`}>
+                (T{buff.turns} turns remaining)
+              </span>
             </div>
-            <div className="col-4 text-end">
-              <button 
-                className="btn btn-danger btn-sm" 
-                onClick={() => removeBuff(index)}
-                aria-label={`Remove ${buff.stat} buff/debuff`}
-              >
-                ×
-              </button>
-            </div>
+            <button 
+              className="buff-remove" 
+              onClick={() => removeBuff(index)}
+              aria-label={`Remove ${buff.stat} buff/debuff`}
+            >
+              ×
+            </button>
           </div>
-        </li>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 
