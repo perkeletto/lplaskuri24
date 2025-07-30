@@ -25,7 +25,18 @@ function App() {
     }
   });
 
+  const [inventory, setInventory] = useState(() => {
+    try {
+      const savedInventory = JSON.parse(localStorage.getItem('inventory'));
+      return savedInventory || [];
+    } catch (error) {
+      console.error('Error loading inventory from localStorage:', error);
+      return [];
+    }
+  });
+
   const [turnEnded, setTurnEnded] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -43,6 +54,14 @@ function App() {
     }
   }, [buffs]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+    } catch (error) {
+      console.error('Error saving inventory to localStorage:', error);
+    }
+  }, [inventory]);
+
   const increment = (stat) => {
     setStats(prevStats => ({ ...prevStats, [stat]: prevStats[stat] + 1 }));
   };
@@ -57,6 +76,18 @@ function App() {
 
   const removeBuff = (index) => {
     setBuffs(prevBuffs => prevBuffs.filter((_, i) => i !== index));
+  };
+
+  const addItem = (title, description) => {
+    setInventory(prevInventory => [...prevInventory, { 
+      id: Date.now(), 
+      title, 
+      description 
+    }]);
+  };
+
+  const removeItem = (id) => {
+    setInventory(prevInventory => prevInventory.filter(item => item.id !== id));
   };
 
   const endTurn = () => {
@@ -84,9 +115,11 @@ function App() {
         wealth: 0
       });
       setBuffs([]);
+      setInventory([]);
       try {
         localStorage.removeItem('stats');
         localStorage.removeItem('buffs');
+        localStorage.removeItem('inventory');
       } catch (error) {
         console.error('Error clearing localStorage:', error);
       }
@@ -104,8 +137,26 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
+        <button 
+          className="hamburger-menu"
+          onClick={() => setIsInventoryOpen(!isInventoryOpen)}
+          aria-label="Toggle inventory menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <h1 className="app-title">LP STATIT</h1>
       </header>
+      
+      {isInventoryOpen && (
+        <Inventory 
+          inventory={inventory} 
+          addItem={addItem} 
+          removeItem={removeItem}
+          onClose={() => setIsInventoryOpen(false)}
+        />
+      )}
       
       <div className="action-buttons">
         <button 
@@ -342,6 +393,117 @@ function BuffList({ buffs, removeBuff }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function Inventory({ inventory, addItem, removeItem, onClose }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemDescription, setNewItemDescription] = useState('');
+
+  const handleAddItem = (e) => {
+    e.preventDefault();
+    if (newItemTitle.trim() && newItemDescription.trim()) {
+      addItem(newItemTitle.trim(), newItemDescription.trim());
+      setNewItemTitle('');
+      setNewItemDescription('');
+      setShowAddForm(false);
+    }
+  };
+
+  return (
+    <div className="inventory-overlay">
+      <div className="inventory-modal">
+        <div className="inventory-header">
+          <h2>Inventory</h2>
+          <button 
+            className="inventory-close"
+            onClick={onClose}
+            aria-label="Close inventory"
+          >
+            ×
+          </button>
+        </div>
+        
+        <div className="inventory-content">
+          {inventory.length === 0 ? (
+            <div className="empty-inventory">
+              <p>No items in inventory</p>
+            </div>
+          ) : (
+            <div className="inventory-items">
+              {inventory.map(item => (
+                <div key={item.id} className="inventory-item">
+                  <div className="item-info">
+                    <h3 className="item-title">{item.title}</h3>
+                    <p className="item-description">{item.description}</p>
+                  </div>
+                  <button 
+                    className="item-remove"
+                    onClick={() => removeItem(item.id)}
+                    aria-label={`Remove ${item.title}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div className="inventory-actions">
+            {!showAddForm ? (
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowAddForm(true)}
+              >
+                Add Item
+              </button>
+            ) : (
+              <form onSubmit={handleAddItem} className="add-item-form">
+                <div className="form-group">
+                  <label className="form-label">Title:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={newItemTitle}
+                    onChange={(e) => setNewItemTitle(e.target.value)}
+                    placeholder="Item title"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Description:</label>
+                  <textarea
+                    className="form-control"
+                    value={newItemDescription}
+                    onChange={(e) => setNewItemDescription(e.target.value)}
+                    placeholder="Item description"
+                    rows="3"
+                    required
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-success">
+                    Add Item
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewItemTitle('');
+                      setNewItemDescription('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
