@@ -11,3 +11,77 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+@media screen and (max-width: 768px) {
+  /* Ensure main content doesn't overlap with the buffs container */
+  .App.container {
+    padding-bottom: 70px; /* Give space for the collapsed buffs container */
+  }
+
+  .buffs-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 1000;
+    min-height: 60px;
+    max-height: 60px;
+    transition: all 0.3s ease;
+    border-top: 1px solid #ddd;
+    padding: 8px 16px;
+    overflow: hidden;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .buffs-container.expanded {
+    max-height: 90vh;
+    min-height: 90vh;
+    overflow-y: auto;
+    padding-bottom: 32px;
+  }
+
+  .drag-handle {
+    width: 50px;
+    height: 5px;
+    background: #bbb;
+    border-radius: 3px;
+    margin: 0 auto 16px;
+    cursor: grab;
+  }
+
+  /* Hide content when collapsed except for the title */
+  .buffs-container:not(.expanded) .buffs-content > *:not(h2) {
+    display: none;
+  }
+
+  .buffs-container:not(.expanded) h2 {
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  /* Form styling improvements */
+  .buff-form {
+    padding: 16px 0;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  /* Make form controls more touch-friendly */
+  input[type="number"],
+  .multi-select,
+  .btn {
+    height: 44px;
+    font-size: 16px;
+  }
+
+  /* Improve list item spacing */
+  .list-group-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+}
