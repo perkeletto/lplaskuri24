@@ -1,7 +1,12 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Red heart background -->
-  <path d="M256 448c-8.188 0-16.38-3.125-22.62-9.375L64 288c-88.366-88.366-88.366-232.164 0-320.53C88.366-88.366 232.164-88.366 320.53 0L256 64.53 191.47 0C103.104-88.366-40.694-88.366-128.53 0c-88.366 88.366-88.366 232.164 0 320.53L256 448z" fill="#dc2626"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="20" fill="white"></rect>
   
-  <!-- White "LP" text -->
-  <text x="256" y="280" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="white">LP</text>
-</svg> 
+  <!-- Heart shape -->
+  <path d="M50 80s-30-20-30-45c0-10 8-18 18-18 6 0 12 3 15 8 3-5 9-8 15-8 10 0 18 8 18 18 0 25-30 45-30 45z" fill="#E02424"></path>
+  
+  <!-- Centered text -->
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="28" fill="white" font-family="Arial, sans-serif" font-weight="bold">
+    LP
+  </text>
+</svg>
