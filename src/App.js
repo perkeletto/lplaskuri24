@@ -34,6 +34,16 @@ function App() {
     }
   });
 
+  const [money, setMoney] = useState(() => {
+    try {
+      const savedMoney = JSON.parse(localStorage.getItem('money'));
+      return savedMoney || 0;
+    } catch (error) {
+      console.error('Error loading money from localStorage:', error);
+      return 0;
+    }
+  });
+
   const [turnEnded, setTurnEnded] = useState(false);
   const [activeTab, setActiveTab] = useState('stats');
 
@@ -60,6 +70,14 @@ function App() {
       console.error('Error saving inventory to localStorage:', error);
     }
   }, [inventory]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('money', JSON.stringify(money));
+    } catch (error) {
+      console.error('Error saving money to localStorage:', error);
+    }
+  }, [money]);
 
   const increment = (stat) => {
     setStats(prevStats => ({ ...prevStats, [stat]: prevStats[stat] + 1 }));
@@ -89,6 +107,10 @@ function App() {
     setInventory(prevInventory => prevInventory.filter(item => item.id !== id));
   };
 
+  const addMoney = (amount) => {
+    setMoney(prevMoney => prevMoney + amount);
+  };
+
   const endTurn = () => {
     const previousBuffs = [...buffs];
     const newBuffs = previousBuffs
@@ -97,15 +119,18 @@ function App() {
     
     setBuffs(newBuffs);
     
-    // Show visual feedback if buffs were affected
-    if (previousBuffs.length > 0) {
-      setTurnEnded(true);
-      setTimeout(() => setTurnEnded(false), 2000); // Hide after 2 seconds
-    }
+    // Calculate money increase based on Wealth stat
+    const wealthPoints = effectiveStats.wealth;
+    const moneyIncrease = wealthPoints * 10;
+    setMoney(prevMoney => prevMoney + moneyIncrease);
+    
+    // Always show visual feedback when turn ends
+    setTurnEnded(true);
+    setTimeout(() => setTurnEnded(false), 2000); // Hide after 2 seconds
   };
 
   const resetGame = () => {
-    if (window.confirm('Are you sure you want to reset all stats and buffs? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to reset all stats, buffs, and money? This action cannot be undone.')) {
       setStats({
         determination: 0,
         humor: 0,
@@ -115,10 +140,12 @@ function App() {
       });
       setBuffs([]);
       setInventory([]);
+      setMoney(0);
       try {
         localStorage.removeItem('stats');
         localStorage.removeItem('buffs');
         localStorage.removeItem('inventory');
+        localStorage.removeItem('money');
       } catch (error) {
         console.error('Error clearing localStorage:', error);
       }
@@ -155,6 +182,8 @@ function App() {
           inventory={inventory} 
           addItem={addItem} 
           removeItem={removeItem}
+          money={money}
+          addMoney={addMoney}
         />;
       default:
         return <StatsTab 
@@ -237,7 +266,7 @@ function StatsTab({ stats, increment, decrement, turnEnded, endTurn, resetGame }
       
       {turnEnded && (
         <div className="feedback-message feedback-success">
-          ✓ Turn ended - buff durations reduced
+          ✓ Turn ended - buff durations reduced and money updated
         </div>
       )}
       
@@ -286,10 +315,13 @@ function BuffsTab({ buffs, addBuff, removeBuff }) {
   );
 }
 
-function InventoryTab({ inventory, addItem, removeItem }) {
+function InventoryTab({ inventory, addItem, removeItem, money, addMoney }) {
   return (
     <div className="inventory-tab">
       <h2 className="tab-title">Inventory</h2>
+      
+      <MoneySection money={money} addMoney={addMoney} />
+      
       {inventory.length === 0 ? (
         <div className="empty-inventory">
           <p>No items in inventory</p>
@@ -316,6 +348,63 @@ function InventoryTab({ inventory, addItem, removeItem }) {
       
       <div className="inventory-actions">
         <AddItemForm addItem={addItem} />
+      </div>
+    </div>
+  );
+}
+
+function MoneySection({ money, addMoney }) {
+  const [amount, setAmount] = useState(100);
+
+  const handleAddMoney = () => {
+    addMoney(amount);
+  };
+
+  const handleSubtractMoney = () => {
+    addMoney(-amount);
+  };
+
+  return (
+    <div className="money-section">
+      <div className="money-display">
+        <span className="money-icon">💰</span>
+        <span className="money-amount">{money.toLocaleString()}</span>
+      </div>
+      
+      <div className="money-controls">
+        <div className="money-input-group">
+          <label className="form-label">Amount:</label>
+          <input
+            type="number"
+            className="form-control"
+            value={amount}
+            onChange={(e) => setAmount(Math.max(1, parseInt(e.target.value) || 1))}
+            min="1"
+            aria-label="Money amount to add or subtract"
+          />
+        </div>
+        
+        <div className="money-buttons">
+          <button 
+            className="btn btn-success"
+            onClick={handleAddMoney}
+            aria-label={`Add ${amount} money`}
+          >
+            +{amount}
+          </button>
+          <button 
+            className="btn btn-danger"
+            onClick={handleSubtractMoney}
+            aria-label={`Subtract ${amount} money`}
+            disabled={money < amount}
+          >
+            -{amount}
+          </button>
+        </div>
+      </div>
+      
+      <div className="money-info">
+        <p>💡 Money increases by 10 × Wealth stat at the start of each turn</p>
       </div>
     </div>
   );

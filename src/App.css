@@ -261,6 +261,75 @@ body {
   font-size: 1rem;
 }
 
+/* Money Section */
+.money-section {
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+}
+
+.money-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--success-color), #059669);
+  border-radius: var(--border-radius-sm);
+  color: white;
+}
+
+.money-icon {
+  font-size: 1.5rem;
+}
+
+.money-amount {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.money-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.money-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.money-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.money-buttons .btn {
+  flex: 1;
+  min-height: 48px;
+}
+
+.money-info {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--background-color);
+  border-radius: var(--border-radius-sm);
+  border-left: 4px solid var(--warning-color);
+}
+
+.money-info p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .inventory-items {
   margin-bottom: var(--spacing-md);
 }
@@ -434,6 +503,28 @@ body {
   .form-control {
     padding: 10px 12px;
     font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Mobile optimizations for money section */
+  .money-section {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .money-display {
+    padding: var(--spacing-xs);
+  }
+  
+  .money-amount {
+    font-size: 1.5rem;
+  }
+  
+  .money-buttons {
+    flex-direction: column;
+  }
+  
+  .money-buttons .btn {
+    width: 100%;
   }
 }
 
