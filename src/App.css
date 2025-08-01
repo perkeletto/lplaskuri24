@@ -250,12 +250,13 @@ body {
 }
 
 .buffs-container.expanded {
-  max-height: 90vh;
-  min-height: 90vh;
+  max-height: 95vh;
+  min-height: 95vh;
+  box-shadow: var(--shadow-lg), 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .drag-handle {
-  height: 24px;
+  height: 32px;
   background: var(--background-color);
   cursor: pointer;
   display: flex;
@@ -263,24 +264,30 @@ body {
   justify-content: center;
   border-bottom: 1px solid var(--border-color);
   position: relative;
+  transition: background-color 0.2s ease;
 }
 
 .drag-handle::after {
   content: '';
-  width: 40px;
-  height: 4px;
+  width: 50px;
+  height: 5px;
   background: var(--text-secondary);
-  border-radius: 2px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
 }
 
 .drag-handle:hover::after {
   background: var(--text-primary);
 }
 
+.drag-handle:active {
+  background-color: var(--border-color);
+}
+
 .buffs-content {
   padding: var(--spacing-md);
   overflow-y: auto;
-  max-height: calc(90vh - 24px);
+  max-height: calc(95vh - 24px);
 }
 
 /* Form Styles */
@@ -521,6 +528,60 @@ body {
     width: 20px;
     height: 2px;
   }
+  
+  /* Mobile optimizations for buffs container */
+  .buffs-container {
+    border-radius: 0;
+  }
+  
+  .buffs-container.expanded {
+    max-height: 100vh;
+    min-height: 100vh;
+  }
+  
+  .buffs-content {
+    max-height: calc(100vh - 32px);
+    padding: var(--spacing-sm);
+  }
+  
+  .buff-form {
+    margin: var(--spacing-sm) 0;
+  }
+  
+  .buff-item {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .buff-content {
+    gap: var(--spacing-xs);
+  }
+  
+  .buff-stat {
+    font-size: 0.9rem;
+  }
+  
+  .buff-turns {
+    font-size: 0.8rem;
+  }
+  
+  .custom-select {
+    padding: var(--spacing-xs);
+  }
+  
+  .custom-select-option {
+    padding: var(--spacing-xs);
+    font-size: 0.9rem;
+  }
+  
+  .form-group {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .form-control {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }
 
 /* Custom Select Component */
@@ -529,8 +590,8 @@ body {
   border-radius: var(--border-radius-sm);
   background-color: white;
   padding: var(--spacing-sm);
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .custom-select-option {
