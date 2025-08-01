@@ -235,6 +235,41 @@ body {
   color: var(--success-color);
 }
 
+/* Turn Reminder */
+.turn-reminder {
+  background: linear-gradient(135deg, var(--warning-color), #d97706);
+  color: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  animation: pulse 2s infinite;
+}
+
+.reminder-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.reminder-text {
+  flex: 1;
+}
+
+.reminder-text strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.reminder-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
 
 
 /* Form Styles */
@@ -327,6 +362,21 @@ body {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Form validation styles */
+.form-control.is-invalid {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+  color: var(--danger-color);
   font-weight: 500;
 }
 
@@ -509,6 +559,27 @@ body {
   .money-section {
     padding: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
+  }
+  
+  /* Mobile optimizations for turn reminder */
+  .turn-reminder {
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .reminder-icon {
+    font-size: 1.5rem;
+  }
+  
+  .reminder-text strong {
+    font-size: 1rem;
+  }
+  
+  .reminder-text p {
+    font-size: 0.85rem;
   }
   
   .money-display {

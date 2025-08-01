@@ -45,6 +45,7 @@ function App() {
   });
 
   const [turnEnded, setTurnEnded] = useState(false);
+  const [isMyTurn, setIsMyTurn] = useState(true);
   const [activeTab, setActiveTab] = useState('stats');
 
   useEffect(() => {
@@ -119,14 +120,20 @@ function App() {
     
     setBuffs(newBuffs);
     
-    // Calculate money increase based on Wealth stat
+    // End turn - buffs decrease, but no money gain yet
+    setTurnEnded(true);
+    setIsMyTurn(false);
+    setTimeout(() => setTurnEnded(false), 2000); // Hide after 2 seconds
+  };
+
+  const startMyTurn = () => {
+    // Calculate money increase based on Wealth stat at start of turn
     const wealthPoints = effectiveStats.wealth;
     const moneyIncrease = wealthPoints * 10;
     setMoney(prevMoney => prevMoney + moneyIncrease);
     
-    // Always show visual feedback when turn ends
-    setTurnEnded(true);
-    setTimeout(() => setTurnEnded(false), 2000); // Hide after 2 seconds
+    // Start turn - money gained, buffs remain the same
+    setIsMyTurn(true);
   };
 
   const resetGame = () => {
@@ -141,6 +148,7 @@ function App() {
       setBuffs([]);
       setInventory([]);
       setMoney(0);
+      setIsMyTurn(true);
       try {
         localStorage.removeItem('stats');
         localStorage.removeItem('buffs');
@@ -162,15 +170,17 @@ function App() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'stats':
-        return <StatsTab 
-          stats={effectiveStats} 
-          increment={increment} 
-          decrement={decrement}
-          turnEnded={turnEnded}
-          endTurn={endTurn}
-          resetGame={resetGame}
-        />;
+             case 'stats':
+         return <StatsTab 
+           stats={effectiveStats} 
+           increment={increment} 
+           decrement={decrement}
+           turnEnded={turnEnded}
+           isMyTurn={isMyTurn}
+           endTurn={endTurn}
+           startMyTurn={startMyTurn}
+           resetGame={resetGame}
+         />;
       case 'buffs':
         return <BuffsTab 
           buffs={buffs} 
@@ -185,15 +195,17 @@ function App() {
           money={money}
           addMoney={addMoney}
         />;
-      default:
-        return <StatsTab 
-          stats={effectiveStats} 
-          increment={increment} 
-          decrement={decrement}
-          turnEnded={turnEnded}
-          endTurn={endTurn}
-          resetGame={resetGame}
-        />;
+             default:
+         return <StatsTab 
+           stats={effectiveStats} 
+           increment={increment} 
+           decrement={decrement}
+           turnEnded={turnEnded}
+           isMyTurn={isMyTurn}
+           endTurn={endTurn}
+           startMyTurn={startMyTurn}
+           resetGame={resetGame}
+         />;
     }
   };
 
@@ -243,18 +255,28 @@ function App() {
   );
 }
 
-function StatsTab({ stats, increment, decrement, turnEnded, endTurn, resetGame }) {
+function StatsTab({ stats, increment, decrement, turnEnded, isMyTurn, endTurn, startMyTurn, resetGame }) {
   return (
     <div className="stats-tab">
       <div className="action-buttons">
-        <button 
-          className={`btn ${turnEnded ? 'btn-success' : 'btn-warning'}`}
-          onClick={endTurn}
-          aria-label="End current turn and reduce buff durations"
-          disabled={turnEnded}
-        >
-          {turnEnded ? 'Turn Ended!' : 'End Turn'}
-        </button>
+        {isMyTurn ? (
+          <button 
+            className="btn btn-warning"
+            onClick={endTurn}
+            aria-label="End current turn and reduce buff durations"
+            disabled={turnEnded}
+          >
+            End Turn
+          </button>
+        ) : (
+          <button 
+            className="btn btn-success"
+            onClick={startMyTurn}
+            aria-label="Start my turn and collect money"
+          >
+            It's My Turn!
+          </button>
+        )}
         <button 
           className="btn btn-danger" 
           onClick={resetGame}
@@ -266,7 +288,17 @@ function StatsTab({ stats, increment, decrement, turnEnded, endTurn, resetGame }
       
       {turnEnded && (
         <div className="feedback-message feedback-success">
-          ✓ Turn ended - buff durations reduced and money updated
+          ✓ Turn ended - buff durations reduced
+        </div>
+      )}
+      
+      {!isMyTurn && (
+        <div className="turn-reminder">
+          <div className="reminder-icon">💰</div>
+          <div className="reminder-text">
+            <strong>Remember to collect your money from the bank!</strong>
+            <p>You'll gain {stats.wealth * 10} money when you start your turn.</p>
+          </div>
         </div>
       )}
       
@@ -355,14 +387,50 @@ function InventoryTab({ inventory, addItem, removeItem, money, addMoney }) {
 
 function MoneySection({ money, addMoney }) {
   const [amount, setAmount] = useState(100);
+  const [error, setError] = useState('');
+
+  const validateAmount = (value) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue)) {
+      return '';
+    }
+    if (numValue < 10) {
+      return 'Minimum amount is 10';
+    }
+    if (numValue > 1000) {
+      return 'Maximum amount is 1000';
+    }
+    if (numValue % 10 !== 0) {
+      return 'Amount must be a multiple of 10';
+    }
+    return '';
+  };
+
+  const handleAmountChange = (e) => {
+    const value = e.target.value;
+
+    const numValue = parseInt(value);
+    // Update amount first, then validate
+    setAmount(numValue);
+    
+    // Validate and show error if needed
+    const errorMsg = validateAmount(value);
+    setError(errorMsg);
+  };
 
   const handleAddMoney = () => {
-    addMoney(amount);
+    if (!error) {
+      addMoney(amount);
+    }
   };
 
   const handleSubtractMoney = () => {
-    addMoney(-amount);
+    if (!error && money >= amount) {
+      addMoney(-amount);
+    }
   };
+
+  const isValid = !error && amount >= 10 && amount <= 1000 && amount % 10 === 0;
 
   return (
     <div className="money-section">
@@ -373,21 +441,29 @@ function MoneySection({ money, addMoney }) {
       
       <div className="money-controls">
         <div className="money-input-group">
-          <label className="form-label">Amount:</label>
+          <label className="form-label">Amount (10-1000, multiples of 10):</label>
           <input
             type="number"
-            className="form-control"
+            className={`form-control ${error ? 'is-invalid' : ''}`}
             value={amount}
-            onChange={(e) => setAmount(Math.max(1, parseInt(e.target.value) || 1))}
-            min="1"
-            aria-label="Money amount to add or subtract"
+            onChange={handleAmountChange}
+            min="10"
+            max="1000"
+            step="10"
+            aria-label="Money amount to add or subtract (must be multiple of 10)"
           />
+          {error && (
+            <div className="invalid-feedback">
+              {error}
+            </div>
+          )}
         </div>
         
         <div className="money-buttons">
           <button 
             className="btn btn-success"
             onClick={handleAddMoney}
+            disabled={!isValid}
             aria-label={`Add ${amount} money`}
           >
             +{amount}
@@ -395,8 +471,8 @@ function MoneySection({ money, addMoney }) {
           <button 
             className="btn btn-danger"
             onClick={handleSubtractMoney}
+            disabled={!isValid || money < amount}
             aria-label={`Subtract ${amount} money`}
-            disabled={money < amount}
           >
             -{amount}
           </button>
@@ -405,6 +481,7 @@ function MoneySection({ money, addMoney }) {
       
       <div className="money-info">
         <p>💡 Money increases by 10 × Wealth stat at the start of each turn</p>
+        <p>💰 Valid amounts: 10, 20, 30... up to 1000</p>
       </div>
     </div>
   );
