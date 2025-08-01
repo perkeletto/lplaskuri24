@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import Alert from 'react-bootstrap/Alert';
-import BuffsContainer from './components/BuffsContainer';
 
 function App() {
   const [stats, setStats] = useState(() => {
@@ -36,7 +35,7 @@ function App() {
   });
 
   const [turnEnded, setTurnEnded] = useState(false);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('stats');
 
   useEffect(() => {
     try {
@@ -134,30 +133,90 @@ function App() {
     return effectiveStats;
   }, [stats, buffs]);
 
-  return (
-    <div className="App">
-      <header className="app-header">
-        <button 
-          className="hamburger-menu"
-          onClick={() => setIsInventoryOpen(!isInventoryOpen)}
-          aria-label="Toggle inventory menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <h1 className="app-title">LP STATIT</h1>
-      </header>
-      
-      {isInventoryOpen && (
-        <Inventory 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'stats':
+        return <StatsTab 
+          stats={effectiveStats} 
+          increment={increment} 
+          decrement={decrement}
+          turnEnded={turnEnded}
+          endTurn={endTurn}
+          resetGame={resetGame}
+        />;
+      case 'buffs':
+        return <BuffsTab 
+          buffs={buffs} 
+          addBuff={addBuff} 
+          removeBuff={removeBuff}
+        />;
+      case 'inventory':
+        return <InventoryTab 
           inventory={inventory} 
           addItem={addItem} 
           removeItem={removeItem}
-          onClose={() => setIsInventoryOpen(false)}
-        />
-      )}
+        />;
+      default:
+        return <StatsTab 
+          stats={effectiveStats} 
+          increment={increment} 
+          decrement={decrement}
+          turnEnded={turnEnded}
+          endTurn={endTurn}
+          resetGame={resetGame}
+        />;
+    }
+  };
+
+  return (
+    <div className="App">
+      <header className="app-header">
+        <h1 className="app-title">LP STATIT</h1>
+      </header>
       
+      <main className="tab-content">
+        {renderTabContent()}
+      </main>
+      
+      <nav className="bottom-nav">
+        <button 
+          className={`nav-tab ${activeTab === 'stats' ? 'active' : ''}`}
+          onClick={() => setActiveTab('stats')}
+          aria-label="Stats tab"
+        >
+          <span className="nav-icon">📊</span>
+          <span className="nav-label">Stats</span>
+        </button>
+        <button 
+          className={`nav-tab ${activeTab === 'buffs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('buffs')}
+          aria-label="Buffs and debuffs tab"
+        >
+          <span className="nav-icon">⚡</span>
+          <span className="nav-label">Buffs</span>
+          {buffs.length > 0 && (
+            <span className="nav-badge">{buffs.length}</span>
+          )}
+        </button>
+        <button 
+          className={`nav-tab ${activeTab === 'inventory' ? 'active' : ''}`}
+          onClick={() => setActiveTab('inventory')}
+          aria-label="Inventory tab"
+        >
+          <span className="nav-icon">🎒</span>
+          <span className="nav-label">Items</span>
+          {inventory.length > 0 && (
+            <span className="nav-badge">{inventory.length}</span>
+          )}
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+function StatsTab({ stats, increment, decrement, turnEnded, endTurn, resetGame }) {
+  return (
+    <div className="stats-tab">
       <div className="action-buttons">
         <button 
           className={`btn ${turnEnded ? 'btn-success' : 'btn-warning'}`}
@@ -183,7 +242,7 @@ function App() {
       )}
       
       <div className="stats-grid">
-        {Object.keys(effectiveStats).sort().map(stat => (
+        {Object.keys(stats).sort().map(stat => (
           <div key={stat} className="stat-card">
             <h2 className="stat-title">{stat.toUpperCase()}</h2>
             <div className="stat-controls">
@@ -195,7 +254,7 @@ function App() {
                 -
               </button>
               <span className="stat-value" role="status" aria-live="polite">
-                {effectiveStats[stat]}
+                {stats[stat]}
               </span>
               <button 
                 className="stat-btn stat-btn-increase" 
@@ -208,18 +267,127 @@ function App() {
           </div>
         ))}
       </div>
-      
-      <BuffsContainer>
-        <h2 className="text-center">Buffs & Debuffs</h2>
-        {buffs.length > 0 && (
-          <div className="active-effects">
-            {buffs.length} active effect{buffs.length !== 1 ? 's' : ''}
-          </div>
-        )}
-        <BuffForm addBuff={addBuff} />
-        <BuffList buffs={buffs} removeBuff={removeBuff} />
-      </BuffsContainer>
     </div>
+  );
+}
+
+function BuffsTab({ buffs, addBuff, removeBuff }) {
+  return (
+    <div className="buffs-tab">
+      <h2 className="tab-title">Buffs & Debuffs</h2>
+      {buffs.length > 0 && (
+        <div className="active-effects">
+          {buffs.length} active effect{buffs.length !== 1 ? 's' : ''}
+        </div>
+      )}
+      <BuffForm addBuff={addBuff} />
+      <BuffList buffs={buffs} removeBuff={removeBuff} />
+    </div>
+  );
+}
+
+function InventoryTab({ inventory, addItem, removeItem }) {
+  return (
+    <div className="inventory-tab">
+      <h2 className="tab-title">Inventory</h2>
+      {inventory.length === 0 ? (
+        <div className="empty-inventory">
+          <p>No items in inventory</p>
+        </div>
+      ) : (
+        <div className="inventory-items">
+          {inventory.map(item => (
+            <div key={item.id} className="inventory-item">
+              <div className="item-info">
+                <h3 className="item-title">{item.title}</h3>
+                <p className="item-description">{item.description}</p>
+              </div>
+              <button 
+                className="item-remove"
+                onClick={() => removeItem(item.id)}
+                aria-label={`Remove ${item.title}`}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div className="inventory-actions">
+        <AddItemForm addItem={addItem} />
+      </div>
+    </div>
+  );
+}
+
+function AddItemForm({ addItem }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemDescription, setNewItemDescription] = useState('');
+
+  const handleAddItem = (e) => {
+    e.preventDefault();
+    if (newItemTitle.trim() && newItemDescription.trim()) {
+      addItem(newItemTitle.trim(), newItemDescription.trim());
+      setNewItemTitle('');
+      setNewItemDescription('');
+      setShowAddForm(false);
+    }
+  };
+
+  if (!showAddForm) {
+    return (
+      <button 
+        className="btn btn-primary"
+        onClick={() => setShowAddForm(true)}
+      >
+        Add Item
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleAddItem} className="add-item-form">
+      <div className="form-group">
+        <label className="form-label">Title:</label>
+        <input
+          type="text"
+          className="form-control"
+          value={newItemTitle}
+          onChange={(e) => setNewItemTitle(e.target.value)}
+          placeholder="Item title"
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">Description:</label>
+        <textarea
+          className="form-control"
+          value={newItemDescription}
+          onChange={(e) => setNewItemDescription(e.target.value)}
+          placeholder="Item description"
+          rows="3"
+          required
+        />
+      </div>
+      <div className="form-actions">
+        <button type="submit" className="btn btn-success">
+          Add Item
+        </button>
+        <button 
+          type="button" 
+          className="btn btn-secondary"
+          onClick={() => {
+            setShowAddForm(false);
+            setNewItemTitle('');
+            setNewItemDescription('');
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -393,117 +561,6 @@ function BuffList({ buffs, removeBuff }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function Inventory({ inventory, addItem, removeItem, onClose }) {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newItemTitle, setNewItemTitle] = useState('');
-  const [newItemDescription, setNewItemDescription] = useState('');
-
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    if (newItemTitle.trim() && newItemDescription.trim()) {
-      addItem(newItemTitle.trim(), newItemDescription.trim());
-      setNewItemTitle('');
-      setNewItemDescription('');
-      setShowAddForm(false);
-    }
-  };
-
-  return (
-    <div className="inventory-overlay">
-      <div className="inventory-modal">
-        <div className="inventory-header">
-          <h2>Inventory</h2>
-          <button 
-            className="inventory-close"
-            onClick={onClose}
-            aria-label="Close inventory"
-          >
-            ×
-          </button>
-        </div>
-        
-        <div className="inventory-content">
-          {inventory.length === 0 ? (
-            <div className="empty-inventory">
-              <p>No items in inventory</p>
-            </div>
-          ) : (
-            <div className="inventory-items">
-              {inventory.map(item => (
-                <div key={item.id} className="inventory-item">
-                  <div className="item-info">
-                    <h3 className="item-title">{item.title}</h3>
-                    <p className="item-description">{item.description}</p>
-                  </div>
-                  <button 
-                    className="item-remove"
-                    onClick={() => removeItem(item.id)}
-                    aria-label={`Remove ${item.title}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <div className="inventory-actions">
-            {!showAddForm ? (
-              <button 
-                className="btn btn-primary"
-                onClick={() => setShowAddForm(true)}
-              >
-                Add Item
-              </button>
-            ) : (
-              <form onSubmit={handleAddItem} className="add-item-form">
-                <div className="form-group">
-                  <label className="form-label">Title:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={newItemTitle}
-                    onChange={(e) => setNewItemTitle(e.target.value)}
-                    placeholder="Item title"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Description:</label>
-                  <textarea
-                    className="form-control"
-                    value={newItemDescription}
-                    onChange={(e) => setNewItemDescription(e.target.value)}
-                    placeholder="Item description"
-                    rows="3"
-                    required
-                  />
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-success">
-                    Add Item
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setNewItemTitle('');
-                      setNewItemDescription('');
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
