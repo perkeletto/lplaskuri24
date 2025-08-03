@@ -693,6 +693,18 @@ body {
   margin-top: var(--spacing-md);
 }
 
+.buff-list-scroll {
+  max-height: 350px;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .buff-list-scroll {
+    max-height: 60vh;
+  }
+}
+
 .buff-item {
   background: white;
   border-radius: var(--border-radius-sm);

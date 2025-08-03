@@ -424,7 +424,9 @@ function BuffsTab({ buffs, addBuff, removeBuff }) {
         </div>
       )}
       <BuffForm addBuff={addBuff} />
-      <BuffList buffs={buffs} removeBuff={removeBuff} />
+      <div className="buff-list-scroll">
+        <BuffList buffs={buffs} removeBuff={removeBuff} />
+      </div>
     </div>
   );
 }
