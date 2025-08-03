@@ -732,6 +732,7 @@ body {
 
 .buff-value {
   font-weight: 600;
+  color: #000;
   margin-left: var(--spacing-xs);
 }
 

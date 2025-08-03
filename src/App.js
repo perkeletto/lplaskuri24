@@ -44,8 +44,32 @@ function App() {
     }
   });
 
-  const [turnEnded, setTurnEnded] = useState(false);
-  const [isMyTurn, setIsMyTurn] = useState(true);
+  const [statuses, setStatuses] = useState(() => {
+    try {
+      const savedStatuses = JSON.parse(localStorage.getItem('statuses'));
+      return savedStatuses || [];
+    } catch (error) {
+      console.error('Error loading statuses from localStorage:', error);
+      return [];
+    }
+  });
+
+  const [turnEnded, setTurnEnded] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('turnEnded'));
+      return saved || false;
+    } catch {
+      return false;
+    }
+  });
+  const [isMyTurn, setIsMyTurn] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('isMyTurn'));
+      return saved !== null ? saved : false; // Default to false, so player must press 'It's My Turn' to start
+    } catch {
+      return false;
+    }
+  });
   const [activeTab, setActiveTab] = useState('stats');
 
   useEffect(() => {
@@ -80,6 +104,26 @@ function App() {
     }
   }, [money]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('statuses', JSON.stringify(statuses));
+    } catch (error) {
+      console.error('Error saving statuses to localStorage:', error);
+    }
+  }, [statuses]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('turnEnded', JSON.stringify(turnEnded));
+    } catch {}
+  }, [turnEnded]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('isMyTurn', JSON.stringify(isMyTurn));
+    } catch {}
+  }, [isMyTurn]);
+
   const increment = (stat) => {
     setStats(prevStats => ({ ...prevStats, [stat]: prevStats[stat] + 1 }));
   };
@@ -112,6 +156,16 @@ function App() {
     setMoney(prevMoney => prevMoney + amount);
   };
 
+  const addStatus = (title, description, turns) => {
+    setStatuses(prevStatuses => [
+      ...prevStatuses,
+      { id: Date.now(), title, description, turns: Number(turns) }
+    ]);
+  };
+  const removeStatus = (id) => {
+    setStatuses(prevStatuses => prevStatuses.filter(status => status.id !== id));
+  };
+
   const endTurn = () => {
     const previousBuffs = [...buffs];
     const newBuffs = previousBuffs
@@ -120,6 +174,13 @@ function App() {
     
     setBuffs(newBuffs);
     
+    // Statuses: decrement turns and remove expired
+    const previousStatuses = [...statuses];
+    const newStatuses = previousStatuses
+      .map(status => ({ ...status, turns: status.turns - 1 }))
+      .filter(status => status.turns > 0);
+    setStatuses(newStatuses);
+
     // End turn - buffs decrease, but no money gain yet
     setTurnEnded(true);
     setIsMyTurn(false);
@@ -148,12 +209,16 @@ function App() {
       setBuffs([]);
       setInventory([]);
       setMoney(0);
-      setIsMyTurn(true);
+      setIsMyTurn(false); // After reset, require player to press 'It's My Turn'
+      setTurnEnded(false);
       try {
         localStorage.removeItem('stats');
         localStorage.removeItem('buffs');
         localStorage.removeItem('inventory');
         localStorage.removeItem('money');
+        localStorage.removeItem('statuses');
+        localStorage.removeItem('turnEnded');
+        localStorage.removeItem('isMyTurn');
       } catch (error) {
         console.error('Error clearing localStorage:', error);
       }
@@ -186,6 +251,12 @@ function App() {
           buffs={buffs} 
           addBuff={addBuff} 
           removeBuff={removeBuff}
+        />;
+      case 'statuses':
+        return <StatusesTab
+          statuses={statuses}
+          addStatus={addStatus}
+          removeStatus={removeStatus}
         />;
       case 'inventory':
         return <InventoryTab 
@@ -237,6 +308,17 @@ function App() {
           <span className="nav-label">Buffs</span>
           {buffs.length > 0 && (
             <span className="nav-badge">{buffs.length}</span>
+          )}
+        </button>
+        <button
+          className={`nav-tab ${activeTab === 'statuses' ? 'active' : ''}`}
+          onClick={() => setActiveTab('statuses')}
+          aria-label="Statuses tab"
+        >
+          <span className="nav-icon">📋</span>
+          <span className="nav-label">Statuses</span>
+          {statuses.length > 0 && (
+            <span className="nav-badge">{statuses.length}</span>
           )}
         </button>
         <button 
@@ -343,6 +425,117 @@ function BuffsTab({ buffs, addBuff, removeBuff }) {
       )}
       <BuffForm addBuff={addBuff} />
       <BuffList buffs={buffs} removeBuff={removeBuff} />
+    </div>
+  );
+}
+
+function StatusesTab({ statuses, addStatus, removeStatus }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [turns, setTurns] = useState(1);
+  const [error, setError] = useState('');
+  const [show, setShow] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (turns < 1) {
+      setError('Turns must be at least 1');
+      return;
+    }
+    addStatus(title, description, turns);
+    setShow(true);
+    setTitle('');
+    setDescription('');
+    setTurns(1);
+  };
+
+  return (
+    <div className="buffs-tab">
+      <h2 className="tab-title">Statuses</h2>
+      {statuses.length > 0 && (
+        <div className="active-effects">
+          {statuses.length} active status{statuses.length !== 1 ? 'es' : ''}
+        </div>
+      )}
+      <form className="buff-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label" htmlFor="statusTitle">Title:</label>
+          <input
+            id="statusTitle"
+            type="text"
+            className="form-control"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="statusDescription">Description:</label>
+          <input
+            id="statusDescription"
+            type="text"
+            className="form-control"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label" htmlFor="statusTurns">Turns:</label>
+          <input
+            id="statusTurns"
+            type="number"
+            className="form-control"
+            value={turns}
+            onChange={e => setTurns(Number(e.target.value))}
+            min="1"
+            required
+          />
+        </div>
+        {error && <div className="form-text text-danger">{error}</div>}
+        {show && (
+          <Alert variant="primary" onClose={() => setShow(false)} dismissible>
+            Status added!
+          </Alert>
+        )}
+        <div className="form-group">
+          <button type="submit" disabled={show} className="btn btn-primary" aria-label="Add status">
+            Add Status
+          </button>
+        </div>
+      </form>
+      <div className="buff-list" role="list" aria-label="Active statuses">
+        {statuses.length === 0 ? (
+          <div className="empty-state">
+            <p>No active statuses</p>
+          </div>
+        ) : (
+          statuses.map(status => (
+            <div key={status.id} className="buff-item buff-item-success" role="listitem">
+              <div className="buff-content">
+                <div className="buff-info">
+                  <span className="buff-stat">{status.title}:</span>
+                  <span className="buff-value">{status.description}</span>
+                  <span className={`buff-turns ${status.turns <= 1 ? 'buff-turns-warning' : 'buff-turns-normal'}`}>
+                    (T{status.turns} turns remaining)
+                  </span>
+                </div>
+                <button
+                  className="buff-remove"
+                  onClick={() => removeStatus(status.id)}
+                  aria-label={`Remove status ${status.title}`}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
